@@ -33,8 +33,10 @@ export const Display = ({
 
   return (
     <>
-      {indentedDisplay.map((line) => (
-        <p style={{ whiteSpace: "pre", marginBlock: "10px" }}>{line}</p>
+      {indentedDisplay.map((line, index) => (
+        <p key={index} style={{ whiteSpace: "pre", marginBlock: "10px" }}>
+          {line}
+        </p>
       ))}
     </>
   );

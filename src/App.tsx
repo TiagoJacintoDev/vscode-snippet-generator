@@ -9,21 +9,15 @@ export const App = () => {
     prefix: "",
     indentation: 2,
     body: "",
+    tabs: [],
     description: "",
   });
-  const setInput = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setInputs((lastInputs) => ({
-      ...lastInputs,
-      [e.target.name]:
-        e.target.type === "number"
-          ? Math.max(0, +e.target.value)
-          : e.target.value,
-    }));
-  };
+
+  console.log(inputs.tabs);
 
   return (
     <>
-      <Form {...inputs} setInput={setInput} />
+      <Form {...inputs} setInputs={setInputs} />
       <Display {...inputs} />
     </>
   );
