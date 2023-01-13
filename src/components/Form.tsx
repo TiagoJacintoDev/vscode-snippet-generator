@@ -1,5 +1,7 @@
 import { ChangeEvent, Dispatch, SetStateAction, useRef } from "react";
 import { Inputs } from "../types/Inputs";
+import { TabSelector } from "./TabSelector";
+import { VariableSelector } from "./VariableSelector";
 
 interface FormProps {
   setInputs: Dispatch<SetStateAction<Inputs>>;
@@ -153,51 +155,11 @@ export const Form = ({
       />
 
       {tabs.length > 0 && (
-        <>
-          <label htmlFor="tagSelector">Go To Tag:</label>
-          <select id="tagSelector" onChange={goToBodyLine}>
-            {tabs.map((tabGroup) => (
-              <optgroup
-                key={tabGroup.id}
-                label={`Tag ${tabGroup.id} ${tabGroup.label ?? ""}`}
-              >
-                {tabGroup.positions.map((tab) => {
-                  const tabPos = `${tab.startPos} ${tab.endPos}`;
-                  return (
-                    <option key={tabPos} value={tabPos}>
-                      Go to tab at line {tab.startPos}
-                    </option>
-                  );
-                })}
-              </optgroup>
-            ))}
-          </select>
-        </>
+        <TabSelector goToBodyLine={goToBodyLine} tabs={tabs} />
       )}
 
       {variables.length > 0 && (
-        <>
-          <label htmlFor="variableSelector">Go To Variable:</label>
-          <select id="variableSelector" onChange={goToBodyLine}>
-            {variables.map((variableGroup) => (
-              <optgroup
-                key={variableGroup.id}
-                label={`Variable ${variableGroup.id} ${
-                  variableGroup.defaultValue ?? ""
-                }`}
-              >
-                {variableGroup.positions.map((variable) => {
-                  const variablePos = `${variable.startPos} ${variable.endPos}`;
-                  return (
-                    <option key={variablePos} value={variablePos}>
-                      Go to variable at line {variable.startPos}
-                    </option>
-                  );
-                })}
-              </optgroup>
-            ))}
-          </select>
-        </>
+        <VariableSelector goToBodyLine={goToBodyLine} variables={variables} />
       )}
     </form>
   );
