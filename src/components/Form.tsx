@@ -29,7 +29,7 @@ export const Form = ({
     const tabWithBrackets = "(?<=\\${)(\\d+)(?=})";
     const tabWithoutBrackets = "(?<=\\$)(\\d+)";
     const regex = new RegExp(
-      placeholder + "|" + tabWithoutBrackets + "|" + tabWithBrackets,
+      `${placeholder}|${tabWithoutBrackets}|${tabWithBrackets}`,
       "g"
     );
 
@@ -39,20 +39,16 @@ export const Form = ({
       const currentMatch = tab[0];
 
       const id = currentMatch.split(":")[0];
-      const label = currentMatch.slice(id.length + 1);
+      const label = currentMatch.slice(id.length + 1) || undefined;
       const startPos = tab.index!;
       const endPos = startPos + currentMatch.length;
 
-      let object: Tab = { id: +id, startPos, endPos };
-
-      if (label) object.label = label;
-
-      return object;
+      return { id: +id, label, startPos, endPos };
     });
 
-    // TODO: Better Architecture
     for (let i = 0; i < newTabs.length; i++) {
       for (let j = 1; j < newTabs.length; j++) {
+        if (i === j) continue;
         if (newTabs[i].id === newTabs[j].id) {
           if (!newTabs[i].label && !newTabs[j].label) continue;
 
