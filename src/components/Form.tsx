@@ -1,6 +1,5 @@
-import { ChangeEvent, Dispatch, SetStateAction } from "react";
+import { ChangeEvent, Dispatch, SetStateAction, useRef } from "react";
 import { Inputs } from "../types/Inputs";
-import { Tab } from "../types/Tab";
 
 interface FormProps {
   setInputs: Dispatch<SetStateAction<Inputs>>;
@@ -12,6 +11,7 @@ export const Form = ({
   indentation,
   body,
   description,
+  tabs,
   setInputs,
 }: Inputs & FormProps) => {
   const setInput = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -47,11 +47,11 @@ export const Form = ({
     });
 
     for (let i = 0; i < newTabs.length; i++) {
-      for (let j = 1; j < newTabs.length; j++) {
+      for (let j = 0; j < newTabs.length; j++) {
         if (i === j) continue;
-        if (newTabs[i].id === newTabs[j].id) {
-          if (!newTabs[i].label && !newTabs[j].label) continue;
+        if (!newTabs[i].label && !newTabs[j].label) continue;
 
+        if (newTabs[i].id === newTabs[j].id && i > j) {
           if (newTabs[j].label) {
             newTabs[i].label = newTabs[j].label;
           } else {
@@ -62,6 +62,17 @@ export const Form = ({
     }
 
     setInputs((lastInputs) => ({ ...lastInputs, tabs: newTabs }));
+  };
+
+  const bodyRef = useRef<HTMLTextAreaElement>(null);
+
+  const goToBodyLine = (e: ChangeEvent<HTMLSelectElement>) => {
+    const splitValue = e.target.value.split(" ");
+    const selectStart = +splitValue[0];
+    const selectEnd = +splitValue[1];
+
+    bodyRef.current!.focus();
+    bodyRef.current!.setSelectionRange(selectStart, selectEnd);
   };
 
   return (
@@ -90,6 +101,7 @@ export const Form = ({
 
       <label htmlFor="body">Body:</label>
       <textarea
+        ref={bodyRef}
         rows={5}
         cols={30}
         id="body"
@@ -108,11 +120,19 @@ export const Form = ({
         value={description}
         onChange={setInput}
       />
+
+      {tabs.length > 0 && (
+        <>
+          <label htmlFor="tagSelector">Go To Tag:</label>
+          <select id="tagSelector" onChange={goToBodyLine}>
+            {tabs.map((tab) => (
+              <option value={`${tab.startPos} ${tab.endPos}`}>
+                Go to tab: {tab.id} {tab.label}
+              </option>
+            ))}
+          </select>
+        </>
+      )}
     </form>
   );
 };
-
-// let input = "$09321 ${209321} ${0: label test32134 %@#$@#!)%*#${}}";
-// let regex = /(?<=\$)(\d+)|(?<=\$\{)(\d+)(?=\})|(?<=\$\{)(.*)(?=\})/g;
-// let matches = input.match(regex);
-// console.log(matches); // ["09321", "209321","0: label test32134 %@#$@#!)%*#${}"]
