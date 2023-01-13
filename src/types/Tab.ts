@@ -1,6 +1,5 @@
 export interface Tab {
   id: number;
   label?: string;
-  startPos: number;
-  endPos: number;
+  positions: { startPos: number; endPos: number }[];
 }

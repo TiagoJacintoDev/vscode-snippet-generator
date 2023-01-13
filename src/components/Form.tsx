@@ -1,5 +1,6 @@
 import { ChangeEvent, Dispatch, SetStateAction, useRef } from "react";
 import { Inputs } from "../types/Inputs";
+import { Tab } from "../types/Tab";
 
 interface FormProps {
   setInputs: Dispatch<SetStateAction<Inputs>>;
@@ -35,31 +36,41 @@ export const Form = ({
 
     const tabs = [...body.matchAll(regex)];
 
-    const newTabs = tabs.map((tab) => {
-      const currentMatch = tab[0];
+    const tabIds = tabs.map((tab) => {
+      const id = +tab[0].split(":")[0];
 
-      const id = currentMatch.split(":")[0];
-      const label = currentMatch.slice(id.length + 1) || undefined;
-      const startPos = tab.index!;
-      const endPos = startPos + currentMatch.length;
-
-      return { id: +id, label, startPos, endPos };
+      return { id };
     });
 
-    for (let i = 0; i < newTabs.length; i++) {
-      for (let j = 0; j < newTabs.length; j++) {
-        if (i === j) continue;
-        if (!newTabs[i].label && !newTabs[j].label) continue;
+    let uniqueTabs = [...new Set(tabIds.map((tab) => tab.id))].map(
+      (id) => tabIds.find((tab) => tab.id === id)!
+    );
 
-        if (newTabs[i].id === newTabs[j].id && i > j) {
-          if (newTabs[j].label) {
-            newTabs[i].label = newTabs[j].label;
-          } else {
-            newTabs[j].label = newTabs[i].label;
-          }
-        }
-      }
-    }
+    const newTabs = uniqueTabs.map((newTab) => {
+      const label = tabs
+        .map((tab) => {
+          const currentMatch = tab[0];
+          const id = currentMatch.split(":")[0];
+          const label = currentMatch.slice(id.length + 1) || undefined;
+          return { id: +id, label };
+        })
+        .find(({ id, label }) => label && newTab?.id === id)?.label;
+
+      const positions = tabs
+        .filter((tab) => {
+          const currentMatch = tab[0];
+          const id = +currentMatch.split(":")[0];
+          return newTab?.id === id;
+        })
+        .map((tab) => {
+          const currentMatch = tab[0];
+          const startPos = tab.index!;
+          const endPos = startPos + currentMatch.length;
+          return { startPos, endPos };
+        });
+
+      return { ...newTab, label, positions };
+    });
 
     setInputs((lastInputs) => ({ ...lastInputs, tabs: newTabs }));
   };
@@ -125,10 +136,20 @@ export const Form = ({
         <>
           <label htmlFor="tagSelector">Go To Tag:</label>
           <select id="tagSelector" onChange={goToBodyLine}>
-            {tabs.map((tab) => (
-              <option value={`${tab.startPos} ${tab.endPos}`}>
-                Go to tab: {tab.id} {tab.label}
-              </option>
+            {tabs.map((tabGroup) => (
+              <optgroup
+                key={tabGroup.id}
+                label={`Tag ${tabGroup.id} ${tabGroup.label ?? ""}`}
+              >
+                {tabGroup.positions.map((tab) => {
+                  const tabPos = `${tab.startPos} ${tab.endPos}`;
+                  return (
+                    <option key={tabPos} value={tabPos}>
+                      Go to tab at line {tab.startPos}
+                    </option>
+                  );
+                })}
+              </optgroup>
             ))}
           </select>
         </>
