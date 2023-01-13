@@ -6,14 +6,14 @@ import { Inputs } from "./types/Inputs";
 export const App = () => {
   const [inputs, setInputs] = useState<Inputs>({
     name: "",
+    scope: "",
     prefix: "",
-    indentation: 2,
     body: "",
-    tabs: [],
     description: "",
+    indentation: 2,
+    tabs: [],
+    variables: [],
   });
-
-  console.log(inputs.tabs);
 
   return (
     <>

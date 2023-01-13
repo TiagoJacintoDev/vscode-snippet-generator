@@ -1,6 +1,5 @@
 import { ChangeEvent, Dispatch, SetStateAction, useRef } from "react";
 import { Inputs } from "../types/Inputs";
-import { Tab } from "../types/Tab";
 
 interface FormProps {
   setInputs: Dispatch<SetStateAction<Inputs>>;
@@ -9,10 +8,12 @@ interface FormProps {
 export const Form = ({
   name,
   prefix,
+  scope,
   indentation,
   body,
   description,
   tabs,
+  variables,
   setInputs,
 }: Inputs & FormProps) => {
   const setInput = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -29,15 +30,17 @@ export const Form = ({
     const placeholder = "(?<=\\${)(.+?)(?=})";
     const tabWithBrackets = "(?<=\\${)(\\d+)(?=})";
     const tabWithoutBrackets = "(?<=\\$)(\\d+)";
+    const variable = "(?<=\\$)(\\w+)";
     const regex = new RegExp(
-      `${placeholder}|${tabWithoutBrackets}|${tabWithBrackets}`,
+      `${placeholder}|${tabWithBrackets}|${tabWithoutBrackets}|${variable}`,
       "g"
     );
 
     const tabs = [...body.matchAll(regex)];
+    console.log(tabs);
 
     const tabIds = tabs.map((tab) => {
-      const id = +tab[0].split(":")[0];
+      const id = tab[0].split(":")[0];
 
       return { id };
     });
@@ -52,14 +55,14 @@ export const Form = ({
           const currentMatch = tab[0];
           const id = currentMatch.split(":")[0];
           const label = currentMatch.slice(id.length + 1) || undefined;
-          return { id: +id, label };
+          return { id, label };
         })
         .find(({ id, label }) => label && newTab?.id === id)?.label;
 
       const positions = tabs
         .filter((tab) => {
           const currentMatch = tab[0];
-          const id = +currentMatch.split(":")[0];
+          const id = currentMatch.split(":")[0];
           return newTab?.id === id;
         })
         .map((tab) => {
@@ -72,7 +75,21 @@ export const Form = ({
       return { ...newTab, label, positions };
     });
 
-    setInputs((lastInputs) => ({ ...lastInputs, tabs: newTabs }));
+    console.log(newTabs);
+
+    setInputs((lastInputs) => {
+      const tabs = newTabs.filter((tab) => !Number.isNaN(+tab.id));
+
+      const variables = newTabs
+        .filter((tab) => Number.isNaN(+tab.id))
+        .map((tab) => ({
+          id: tab.id,
+          defaultValue: tab.label,
+          positions: tab.positions,
+        }));
+
+      return { ...lastInputs, tabs, variables };
+    });
   };
 
   const bodyRef = useRef<HTMLTextAreaElement>(null);
@@ -97,6 +114,9 @@ export const Form = ({
     >
       <label htmlFor="name">Name:</label>
       <input id="name" name="name" value={name} onChange={setInput} />
+
+      <label htmlFor="scope">Scope:</label>
+      <input id="scope" name="scope" value={scope} onChange={setInput} />
 
       <label htmlFor="prefix">Prefix:</label>
       <input id="prefix" name="prefix" value={prefix} onChange={setInput} />
@@ -146,6 +166,31 @@ export const Form = ({
                   return (
                     <option key={tabPos} value={tabPos}>
                       Go to tab at line {tab.startPos}
+                    </option>
+                  );
+                })}
+              </optgroup>
+            ))}
+          </select>
+        </>
+      )}
+
+      {variables.length > 0 && (
+        <>
+          <label htmlFor="variableSelector">Go To Variable:</label>
+          <select id="variableSelector" onChange={goToBodyLine}>
+            {variables.map((variableGroup) => (
+              <optgroup
+                key={variableGroup.id}
+                label={`Variable ${variableGroup.id} ${
+                  variableGroup.defaultValue ?? ""
+                }`}
+              >
+                {variableGroup.positions.map((variable) => {
+                  const variablePos = `${variable.startPos} ${variable.endPos}`;
+                  return (
+                    <option key={variablePos} value={variablePos}>
+                      Go to variable at line {variable.startPos}
                     </option>
                   );
                 })}
