@@ -10,6 +10,7 @@ export const TabSelector = ({ goToBodyLine, tabs }: TabSelectorProps) => {
   return (
     <>
       <label htmlFor="tagSelector">Go To Tag:</label>
+      {/* TODO: Go to body line on option click, not on change */}
       <select id="tagSelector" onChange={goToBodyLine}>
         {tabs.map((tabGroup) => (
           <optgroup
@@ -20,7 +21,7 @@ export const TabSelector = ({ goToBodyLine, tabs }: TabSelectorProps) => {
               const tabPos = `${tab.startPos} ${tab.endPos}`;
               return (
                 <option key={tabPos} value={tabPos}>
-                  Go to tab at line {tab.startPos}
+                  Go to tab at letter {tab.startPos}
                 </option>
               );
             })}

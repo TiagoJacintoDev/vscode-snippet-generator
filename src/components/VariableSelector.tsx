@@ -13,6 +13,7 @@ export const VariableSelector = ({
   return (
     <>
       <label htmlFor="variableSelector">Go To Variable:</label>
+      {/* TODO: Go to body line on option click, not on change */}
       <select id="variableSelector" onChange={goToBodyLine}>
         {variables.map((variableGroup) => (
           <optgroup
@@ -25,7 +26,7 @@ export const VariableSelector = ({
               const variablePos = `${variable.startPos} ${variable.endPos}`;
               return (
                 <option key={variablePos} value={variablePos}>
-                  Go to variable at line {variable.startPos}
+                  Go to variable at letter {variable.startPos}
                 </option>
               );
             })}

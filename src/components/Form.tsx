@@ -1,4 +1,11 @@
-import { ChangeEvent, Dispatch, SetStateAction, useRef } from "react";
+import {
+  ChangeEvent,
+  Dispatch,
+  KeyboardEvent,
+  SetStateAction,
+  useRef,
+  useState,
+} from "react";
 import { Inputs } from "../types/Inputs";
 import { TabSelector } from "./TabSelector";
 import { VariableSelector } from "./VariableSelector";
@@ -18,6 +25,8 @@ export const Form = ({
   variables,
   setInputs,
 }: Inputs & FormProps) => {
+  const [selectedTab, setSelectedTab] = useState("0");
+
   const setInput = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setInputs((lastInputs) => ({
       ...lastInputs,
@@ -39,7 +48,6 @@ export const Form = ({
     );
 
     const tabs = [...body.matchAll(regex)];
-    console.log(tabs);
 
     const tabIds = tabs.map((tab) => {
       const id = tab[0].split(":")[0];
@@ -77,8 +85,6 @@ export const Form = ({
       return { ...newTab, label, positions };
     });
 
-    console.log(newTabs);
-
     setInputs((lastInputs) => {
       const tabs = newTabs.filter((tab) => !Number.isNaN(+tab.id));
 
@@ -103,6 +109,16 @@ export const Form = ({
 
     bodyRef.current!.focus();
     bodyRef.current!.setSelectionRange(selectStart, selectEnd);
+  };
+
+  const addSelectedTabOnKeyPress = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.ctrlKey && e.keyCode === 73) {
+      const [start, end] = [
+        bodyRef.current!.selectionStart,
+        bodyRef.current!.selectionEnd,
+      ];
+      bodyRef.current?.setRangeText("$" + selectedTab, start, end, "end");
+    }
   };
 
   return (
@@ -144,6 +160,7 @@ export const Form = ({
           setInput(e);
           syncTabs(e.target.value);
         }}
+        onKeyDown={addSelectedTabOnKeyPress}
       />
 
       <label htmlFor="description">Description:</label>
@@ -154,12 +171,23 @@ export const Form = ({
         onChange={setInput}
       />
 
-      {tabs.length > 0 && (
-        <TabSelector goToBodyLine={goToBodyLine} tabs={tabs} />
-      )}
+      <label htmlFor="selectTag">Select Tag:</label>
+      <select
+        id="selectTag"
+        value={selectedTab}
+        onChange={(e) => setSelectedTab(e.target.value)}
+      >
+        {tabs.map((tab) => (
+          <option value={tab.id} key={tab.id}>
+            {tab.id} {tab.label}
+          </option>
+        ))}
+      </select>
+
+      {tabs.length > 0 && <TabSelector {...{ goToBodyLine, tabs }} />}
 
       {variables.length > 0 && (
-        <VariableSelector goToBodyLine={goToBodyLine} variables={variables} />
+        <VariableSelector {...{ goToBodyLine, variables }} />
       )}
     </form>
   );
