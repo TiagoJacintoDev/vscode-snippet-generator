@@ -184,6 +184,19 @@ export const Form = ({
     }
   };
 
+  const IndentBodyWithTag = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.keyCode === 9) {
+      e.preventDefault();
+      const start = bodyRef.current!.selectionStart;
+
+      const firstSlice = body.slice(0, start);
+      const secondSlice = body.slice(start);
+      const updatedBody = firstSlice + "\\t" + secondSlice;
+      setInputs((lastInputs) => ({ ...lastInputs, body: updatedBody }));
+      syncTabs(updatedBody);
+    }
+  };
+
   return (
     <form
       style={{
@@ -223,7 +236,10 @@ export const Form = ({
           setInput(e);
           syncTabs(e.target.value);
         }}
-        onKeyDown={addSelectedTabOnKeyPress}
+        onKeyDown={(e) => {
+          addSelectedTabOnKeyPress(e);
+          IndentBodyWithTag(e);
+        }}
       />
 
       <label htmlFor="description">Description:</label>
