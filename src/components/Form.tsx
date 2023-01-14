@@ -46,107 +46,92 @@ export const Form = ({
     const variableWithBrackets = /(?<=\${)([A-Z_]+?)(?=})/;
     const variableWithDefaultValue = /(?<=\${)([A-Z_]+?:[a-z]+)(?=})/;
 
-    const variable = composeRegex(
-      variableWithoutBrackets,
-      variableWithBrackets,
-      variableWithDefaultValue
-    );
-    const variables = [...body.matchAll(variable)];
-
-    const tabWithId = composeRegex(tab, placeholder, choice);
-    const tabsWithIds = [...body.matchAll(tabWithId)];
-
-    const tabIds = tabsWithIds.map((tab) => {
-      const labelId = tab[0].split(":")[0];
-      const choiceId = tab[0].split("|")[0];
-
-      return { id: +labelId ? labelId : choiceId };
-    });
+    const variables = [
+      ...body.matchAll(
+        composeRegex(
+          variableWithoutBrackets,
+          variableWithBrackets,
+          variableWithDefaultValue
+        )
+      ),
+    ];
 
     const variableNames = variables.map((variable) => {
       const name = variable[0].split(":")[0];
       return { name };
     });
 
-    const uniqueTabs = [...new Set(tabIds.map((tab) => tab.id))].map(
-      (id) => tabIds.find((tab) => tab.id === id)!
-    );
-
     const uniqueVariables = [
       ...new Set(variableNames.map((variable) => variable.name)),
     ].map((name) => variableNames.find((variable) => variable.name === name)!);
 
-    const newVariables = uniqueVariables.map((newVariable) => {
-      const defaultValues = variables
-        .filter((variable) => {
-          const currentMatch = variable[0];
-          const name = currentMatch.split(":")[0];
-          return newVariable?.name === name;
-        })
-        .map((variable) => {
-          const currentMatch = variable[0];
-          const defaultValue = currentMatch.split(":")[1];
-          return defaultValue;
-        });
+    const newVariables = uniqueVariables.map(({ name }) => {
+      const variableWithCurrentName = variables.filter((variable) => {
+        const currentName = variable[0].split(":")[0];
+        return name === currentName;
+      });
+      const defaultValues = variableWithCurrentName.map((variable) => {
+        return variable[0].split(":")[1];
+      });
 
-      const positions = variables
-        .filter((variable) => {
-          const currentMatch = variable[0];
-          const name = currentMatch.split(":")[0];
-          return newVariable?.name === name;
-        })
-        .map((variable) => {
-          const currentMatch = variable[0];
-          const startPos = variable.index!;
-          const endPos = startPos + currentMatch.length;
-          return { startPos, endPos };
-        });
+      const positions = variables.map((variable) => {
+        const startPos = variable.index!;
+        const endPos = startPos + variable[0].length;
+        return { startPos, endPos };
+      });
 
-      return { ...newVariable, defaultValues, positions };
+      return { name, defaultValues, positions };
     });
 
-    const newTabs = uniqueTabs.map((newTab) => {
-      const firstAssignedTab = tabsWithIds
+    const tabsWithIds = [
+      ...body.matchAll(composeRegex(tab, placeholder, choice)),
+    ];
+
+    const tabIds = tabsWithIds.map((tab) => {
+      const id = tab[0].split(/:|\|/)[0];
+
+      return { id };
+    });
+
+    const uniqueTabs = [...new Set(tabIds.map((tab) => tab.id))].map(
+      (id) => tabIds.find((tab) => tab.id === id)!
+    );
+
+    const newTabs = uniqueTabs.map(({ id }) => {
+      const tabsWithCurrentId = tabsWithIds.filter((tab) => {
+        const currentId = tab[0].split(/:|\|/)[0];
+        return id === currentId;
+      });
+
+      const firstAssignedTab = tabsWithCurrentId
         .map((tab) => {
           const currentMatch = tab[0];
-          const labelId = currentMatch.split(":")[0];
-          const choiceId = currentMatch.split("|")[0];
-          const label = currentMatch.slice(labelId.length + 1) || undefined;
-          const values = currentMatch.slice(choiceId.length + 1) || undefined;
+          const label = currentMatch.slice(id.length + 1) || undefined;
+          const values = currentMatch.slice(id.length + 1) || undefined;
           const choices = values?.split(",");
 
-          return { id: +labelId ? labelId : choiceId, label, choices };
+          return { label, choices };
         })
-        .find(({ id, label, choices }) => {
-          if (label && id === newTab.id) {
+        .find(({ label, choices }) => {
+          if (label) {
             return true;
-          } else if (choices && id === newTab.id) {
+          } else if (choices) {
             return true;
           } else {
             return false;
           }
         });
 
-      const positions = tabsWithIds
-        .filter((tab) => {
-          const currentMatch = tab[0];
-          const labelId = currentMatch.split(":")[0];
-          const choiceId = currentMatch.split("|")[0];
+      const positions = tabsWithCurrentId.map((tab) => {
+        const currentMatch = tab[0];
+        const startPos = tab.index!;
+        const endPos = startPos + currentMatch.length;
 
-          const id = +labelId ? labelId : choiceId;
-
-          return newTab?.id === id;
-        })
-        .map((tab) => {
-          const currentMatch = tab[0];
-          const startPos = tab.index!;
-          const endPos = startPos + currentMatch.length;
-
-          return { startPos, endPos };
-        });
+        return { startPos, endPos };
+      });
 
       return {
-        ...newTab,
+        id,
         choices: firstAssignedTab?.choices,
         label: firstAssignedTab?.label,
         positions,
