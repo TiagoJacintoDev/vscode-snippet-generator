@@ -6,6 +6,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { composeRegex } from "../helpers/functions";
 import { Inputs } from "../types/Inputs";
 import { TabSelector } from "./TabSelector";
 import { VariableSelector } from "./VariableSelector";
@@ -38,23 +39,28 @@ export const Form = ({
   };
 
   const syncTabs = (body: string) => {
-    const tab = /(?<=\${)(\d+)(?=})|(?<=\$)(\d+)/g;
-    const placeholder = /(?<=\${)(\d+:.+?)(?=})/g;
-    const choice = /(?<=\${)(\d+\|.+?)(?=\|})/g;
-    const variable =
-      /(?<=\$)([A-Z_]+?)|(?<=\${)([A-Z_]+?)(?=})|(?<=\${)([A-Z_]+?:[a-z]+)(?=})/g;
+    const tab = /(?<=\${)(\d+)(?=})|(?<=\$)(\d+)/;
+    const placeholder = /(?<=\${)(\d+:.+?)(?=})/;
+    const choice = /(?<=\${)(\d+\|.+?)(?=\|})/;
+    const variableWithoutBrackets = /(?<=\$)([A-Z_]+)/;
+    const variableWithBrackets = /(?<=\${)([A-Z_]+?)(?=})/;
+    const variableWithDefaultValue = /(?<=\${)([A-Z_]+?:[a-z]+)(?=})/;
 
-    const tabs = [...body.matchAll(tab)];
-    const placeholders = [...body.matchAll(placeholder)];
-    const choices = [...body.matchAll(choice)];
+    const variable = composeRegex(
+      variableWithoutBrackets,
+      variableWithBrackets,
+      variableWithDefaultValue
+    );
     const variables = [...body.matchAll(variable)];
-    console.log(variables);
 
-    const tabsWithIds = [...tabs, ...placeholders, ...choices];
+    const tabWithId = composeRegex(tab, placeholder, choice);
+    const tabsWithIds = [...body.matchAll(tabWithId)];
 
     const tabIds = tabsWithIds.map((tab) => {
-      const id = tab[0].split(":")[0];
-      return { id };
+      const labelId = tab[0].split(":")[0];
+      const choiceId = tab[0].split("|")[0];
+
+      return { id: +labelId ? labelId : choiceId };
     });
 
     const variableNames = variables.map((variable) => {
@@ -71,8 +77,6 @@ export const Form = ({
     ].map((name) => variableNames.find((variable) => variable.name === name)!);
 
     const newVariables = uniqueVariables.map((newVariable) => {
-      console.log(newVariable);
-
       const defaultValues = variables
         .filter((variable) => {
           const currentMatch = variable[0];
@@ -111,7 +115,7 @@ export const Form = ({
           const values = currentMatch.slice(choiceId.length + 1) || undefined;
           const choices = values?.split(",");
 
-          return { id: labelId || choiceId, label, choices };
+          return { id: +labelId ? labelId : choiceId, label, choices };
         })
         .find(({ id, label, choices }) => {
           if (label && id === newTab.id) {
@@ -126,13 +130,18 @@ export const Form = ({
       const positions = tabsWithIds
         .filter((tab) => {
           const currentMatch = tab[0];
-          const id = currentMatch.split(":")[0];
+          const labelId = currentMatch.split(":")[0];
+          const choiceId = currentMatch.split("|")[0];
+
+          const id = +labelId ? labelId : choiceId;
+
           return newTab?.id === id;
         })
         .map((tab) => {
           const currentMatch = tab[0];
           const startPos = tab.index!;
           const endPos = startPos + currentMatch.length;
+
           return { startPos, endPos };
         });
 

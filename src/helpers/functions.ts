@@ -25,3 +25,6 @@ export const formatBody = (body: string, indentation: number) => {
 
   return indentedLines.join("");
 };
+
+export const composeRegex = (...regexes: RegExp[]) =>
+  new RegExp(regexes.map((regex) => regex.source).join("|"), "g");
