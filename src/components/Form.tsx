@@ -56,11 +56,41 @@ export const Form = ({
     const tabWithId = composeRegex(tab, placeholder, choice);
     const tabsWithIds = [...body.matchAll(tabWithId)];
 
-    const tabIds = tabsWithIds.map((tab) => {
-      const labelId = tab[0].split(":")[0];
-      const choiceId = tab[0].split("|")[0];
+    // TODO: Test this logic
+    const tabIds = tabsWithIds.map((tab, index, self) => {
+      const currentMatch = tab[0];
+      const id = tab[0].split(/:|\|/)[0];
+      const startPos = tab.index!;
+      const endPos = startPos + currentMatch.length;
 
-      return { id: +labelId ? labelId : choiceId };
+      const firstAssignedTab = self
+        .map((tab) => {
+          const selfId = tab[0].split(/:|\|/)[0];
+          const label = currentMatch.slice(id.length + 1) || undefined;
+          const choices = label?.split(",");
+
+          return { label, choices, selfId };
+        })
+        .find(({ label, choices, selfId }) => {
+          if (label && id === selfId) {
+            return true;
+          } else if (choices && id === selfId) {
+            return true;
+          } else {
+            return false;
+          }
+        });
+
+      const { label, choices } = firstAssignedTab!;
+
+      const positions = self
+        .filter((tab) => {
+          const selfId = tab[0].split(/:|\|/)[0];
+          return id === selfId;
+        })
+        .map(() => ({ startPos, endPos }));
+
+      return { id, label, choices, positions };
     });
 
     const variableNames = variables.map((variable) => {
@@ -106,26 +136,15 @@ export const Form = ({
     });
 
     const newTabs = uniqueTabs.map((newTab) => {
-      const firstAssignedTab = tabsWithIds
-        .map((tab) => {
-          const currentMatch = tab[0];
-          const labelId = currentMatch.split(":")[0];
-          const choiceId = currentMatch.split("|")[0];
-          const label = currentMatch.slice(labelId.length + 1) || undefined;
-          const values = currentMatch.slice(choiceId.length + 1) || undefined;
-          const choices = values?.split(",");
-
-          return { id: +labelId ? labelId : choiceId, label, choices };
-        })
-        .find(({ id, label, choices }) => {
-          if (label && id === newTab.id) {
-            return true;
-          } else if (choices && id === newTab.id) {
-            return true;
-          } else {
-            return false;
-          }
-        });
+      const firstAssignedTab = tabIds.find(({ id, label, choices }) => {
+        if (label && id === newTab.id) {
+          return true;
+        } else if (choices && id === newTab.id) {
+          return true;
+        } else {
+          return false;
+        }
+      });
 
       const positions = tabsWithIds
         .filter((tab) => {
