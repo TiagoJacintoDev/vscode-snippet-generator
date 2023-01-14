@@ -38,38 +38,92 @@ export const Form = ({
   };
 
   const syncTabs = (body: string) => {
-    const placeholder = "(?<=\\${)(.+?)(?=})";
-    const tabWithBrackets = "(?<=\\${)(\\d+)(?=})";
-    const tabWithoutBrackets = "(?<=\\$)(\\d+)";
-    const variable = "(?<=\\$)(\\w+)";
-    const regex = new RegExp(
-      `${placeholder}|${tabWithBrackets}|${tabWithoutBrackets}|${variable}`,
-      "g"
-    );
+    const tab = /(?<=\${)(\d+)(?=})|(?<=\$)(\d+)/g;
+    const placeholder = /(?<=\${)(\d+:.+?)(?=})/g;
+    const choice = /(?<=\${)(\d+\|.+?)(?=\|})/g;
+    const variable =
+      /(?<=\$)([A-Z_]+?)|(?<=\${)([A-Z_]+?)(?=})|(?<=\${)([A-Z_]+?:[a-z]+)(?=})/g;
 
-    const tabs = [...body.matchAll(regex)];
+    const tabs = [...body.matchAll(tab)];
+    const placeholders = [...body.matchAll(placeholder)];
+    const choices = [...body.matchAll(choice)];
+    const variables = [...body.matchAll(variable)];
+    console.log(variables);
 
-    const tabIds = tabs.map((tab) => {
+    const tabsWithIds = [...tabs, ...placeholders, ...choices];
+
+    const tabIds = tabsWithIds.map((tab) => {
       const id = tab[0].split(":")[0];
-
       return { id };
     });
 
-    let uniqueTabs = [...new Set(tabIds.map((tab) => tab.id))].map(
+    const variableNames = variables.map((variable) => {
+      const name = variable[0].split(":")[0];
+      return { name };
+    });
+
+    const uniqueTabs = [...new Set(tabIds.map((tab) => tab.id))].map(
       (id) => tabIds.find((tab) => tab.id === id)!
     );
 
+    const uniqueVariables = [
+      ...new Set(variableNames.map((variable) => variable.name)),
+    ].map((name) => variableNames.find((variable) => variable.name === name)!);
+
+    const newVariables = uniqueVariables.map((newVariable) => {
+      console.log(newVariable);
+
+      const defaultValues = variables
+        .filter((variable) => {
+          const currentMatch = variable[0];
+          const name = currentMatch.split(":")[0];
+          return newVariable?.name === name;
+        })
+        .map((variable) => {
+          const currentMatch = variable[0];
+          const defaultValue = currentMatch.split(":")[1];
+          return defaultValue;
+        });
+
+      const positions = variables
+        .filter((variable) => {
+          const currentMatch = variable[0];
+          const name = currentMatch.split(":")[0];
+          return newVariable?.name === name;
+        })
+        .map((variable) => {
+          const currentMatch = variable[0];
+          const startPos = variable.index!;
+          const endPos = startPos + currentMatch.length;
+          return { startPos, endPos };
+        });
+
+      return { ...newVariable, defaultValues, positions };
+    });
+
     const newTabs = uniqueTabs.map((newTab) => {
-      const label = tabs
+      const firstAssignedTab = tabsWithIds
         .map((tab) => {
           const currentMatch = tab[0];
-          const id = currentMatch.split(":")[0];
-          const label = currentMatch.slice(id.length + 1) || undefined;
-          return { id, label };
-        })
-        .find(({ id, label }) => label && newTab?.id === id)?.label;
+          const labelId = currentMatch.split(":")[0];
+          const choiceId = currentMatch.split("|")[0];
+          const label = currentMatch.slice(labelId.length + 1) || undefined;
+          const values = currentMatch.slice(choiceId.length + 1) || undefined;
+          const choices = values?.split(",");
 
-      const positions = tabs
+          return { id: labelId || choiceId, label, choices };
+        })
+        .find(({ id, label, choices }) => {
+          if (label && id === newTab.id) {
+            return true;
+          } else if (choices && id === newTab.id) {
+            return true;
+          } else {
+            return false;
+          }
+        });
+
+      const positions = tabsWithIds
         .filter((tab) => {
           const currentMatch = tab[0];
           const id = currentMatch.split(":")[0];
@@ -82,22 +136,19 @@ export const Form = ({
           return { startPos, endPos };
         });
 
-      return { ...newTab, label, positions };
+      return {
+        ...newTab,
+        choices: firstAssignedTab?.choices,
+        label: firstAssignedTab?.label,
+        positions,
+      };
     });
 
-    setInputs((lastInputs) => {
-      const tabs = newTabs.filter((tab) => !Number.isNaN(+tab.id));
-
-      const variables = newTabs
-        .filter((tab) => Number.isNaN(+tab.id))
-        .map((tab) => ({
-          id: tab.id,
-          defaultValue: tab.label,
-          positions: tab.positions,
-        }));
-
-      return { ...lastInputs, tabs, variables };
-    });
+    setInputs((lastInputs) => ({
+      ...lastInputs,
+      variables: newVariables,
+      tabs: newTabs,
+    }));
   };
 
   const bodyRef = useRef<HTMLTextAreaElement>(null);
@@ -113,11 +164,14 @@ export const Form = ({
 
   const addSelectedTabOnKeyPress = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.ctrlKey && e.keyCode === 73) {
-      const [start, end] = [
-        bodyRef.current!.selectionStart,
-        bodyRef.current!.selectionEnd,
-      ];
-      bodyRef.current?.setRangeText("$" + selectedTab, start, end, "end");
+      const start = bodyRef.current!.selectionStart;
+
+      const firstSlice = body.slice(0, start);
+      const secondSlice = body.slice(start);
+      const updatedBody = firstSlice + "$" + selectedTab + secondSlice;
+
+      setInputs((lastInputs) => ({ ...lastInputs, body: updatedBody }));
+      syncTabs(updatedBody);
     }
   };
 
@@ -171,18 +225,22 @@ export const Form = ({
         onChange={setInput}
       />
 
-      <label htmlFor="selectTag">Select Tag:</label>
-      <select
-        id="selectTag"
-        value={selectedTab}
-        onChange={(e) => setSelectedTab(e.target.value)}
-      >
-        {tabs.map((tab) => (
-          <option value={tab.id} key={tab.id}>
-            {tab.id} {tab.label}
-          </option>
-        ))}
-      </select>
+      {tabs.length > 0 && (
+        <>
+          <label htmlFor="selectTab">Select Tab:</label>
+          <select
+            id="selectTab"
+            value={selectedTab}
+            onChange={(e) => setSelectedTab(e.target.value)}
+          >
+            {tabs.map((tab) => (
+              <option value={tab.id} key={tab.id}>
+                {tab.id} {tab.label}
+              </option>
+            ))}
+          </select>
+        </>
+      )}
 
       {tabs.length > 0 && <TabSelector {...{ goToBodyLine, tabs }} />}
 

@@ -9,7 +9,7 @@ interface TabSelectorProps {
 export const TabSelector = ({ goToBodyLine, tabs }: TabSelectorProps) => {
   return (
     <>
-      <label htmlFor="tagSelector">Go To Tag:</label>
+      <label htmlFor="tagSelector">Go To Tab:</label>
       {/* TODO: Go to body line on option click, not on change */}
       <select id="tagSelector" onChange={goToBodyLine}>
         {tabs.map((tabGroup) => (

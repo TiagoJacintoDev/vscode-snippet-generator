@@ -17,10 +17,8 @@ export const VariableSelector = ({
       <select id="variableSelector" onChange={goToBodyLine}>
         {variables.map((variableGroup) => (
           <optgroup
-            key={variableGroup.id}
-            label={`Variable ${variableGroup.id} ${
-              variableGroup.defaultValue ?? ""
-            }`}
+            key={variableGroup.name}
+            label={`Variable ${variableGroup.name}`}
           >
             {variableGroup.positions.map((variable) => {
               const variablePos = `${variable.startPos} ${variable.endPos}`;

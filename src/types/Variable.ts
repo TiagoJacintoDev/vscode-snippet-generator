@@ -1,7 +1,7 @@
 import { Position } from "./Position";
 
 export interface Variable {
-  id: string;
-  defaultValue?: string;
+  name: string;
+  defaultValues?: string[];
   positions: Position[];
 }

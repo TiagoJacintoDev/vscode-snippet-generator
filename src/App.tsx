@@ -1,4 +1,4 @@
-import { ChangeEvent, useState } from "react";
+import { useState } from "react";
 import { Display } from "./components/Display";
 import { Form } from "./components/Form";
 import { Inputs } from "./types/Inputs";
