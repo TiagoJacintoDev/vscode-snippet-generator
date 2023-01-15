@@ -58,14 +58,12 @@ export const Form = ({
 
     const variableNames = variables.map((variable) => {
       const name = variable[0].split(":")[0];
-      return { name };
+      return name;
     });
 
-    const uniqueVariables = [
-      ...new Set(variableNames.map((variable) => variable.name)),
-    ].map((name) => variableNames.find((variable) => variable.name === name)!);
+    const uniqueVariables = [...new Set(variableNames)];
 
-    const newVariables = uniqueVariables.map(({ name }) => {
+    const newVariables = uniqueVariables.map((name) => {
       const variableWithCurrentName = variables.filter((variable) => {
         const currentName = variable[0].split(":")[0];
         return name === currentName;
@@ -90,14 +88,12 @@ export const Form = ({
     const tabIds = tabsWithIds.map((tab) => {
       const id = tab[0].split(/:|\|/)[0];
 
-      return { id };
+      return id;
     });
 
-    const uniqueTabs = [...new Set(tabIds.map((tab) => tab.id))].map(
-      (id) => tabIds.find((tab) => tab.id === id)!
-    );
+    const uniqueTabs = [...new Set(tabIds)];
 
-    const newTabs = uniqueTabs.map(({ id }) => {
+    const newTabs = uniqueTabs.map((id) => {
       const tabsWithCurrentId = tabsWithIds.filter((tab) => {
         const currentId = tab[0].split(/:|\|/)[0];
         return id === currentId;
