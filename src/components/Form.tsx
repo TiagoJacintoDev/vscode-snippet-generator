@@ -81,13 +81,15 @@ export const Form = ({
       };
     });
 
+    if (newTabs.length > 0) {
+      setSelectedTab(newTabs[0].id);
+    }
+
     setInputs((lastInputs) => ({
       ...lastInputs,
       variables: newVariables,
       tabs: newTabs,
     }));
-
-    setSelectedTab(newTabs[0].id);
   };
 
   const bodyRef = useRef<HTMLTextAreaElement>(null);
@@ -112,13 +114,13 @@ export const Form = ({
     syncTabs(updatedBody);
   };
 
-  const addSelectedTabOnKeyPress = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+  const addSelectedTab = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.ctrlKey && e.key === "i") {
       addTextToBody("$" + selectedTab);
     }
   };
 
-  const addNextTabOnKeyPress = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+  const addNextTab = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.ctrlKey && e.key === "y") {
       const currentTab =
         tabs.length > 0 ? +tabs.sort((a, b) => +b.id - +a.id)[0].id : 0;
@@ -176,8 +178,8 @@ export const Form = ({
           syncTabs(e.target.value);
         }}
         onKeyDown={(e) => {
-          addSelectedTabOnKeyPress(e);
-          addNextTabOnKeyPress(e);
+          addSelectedTab(e);
+          addNextTab(e);
           IndentBodyWithTag(e);
         }}
       />
