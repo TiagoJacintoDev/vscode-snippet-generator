@@ -6,7 +6,15 @@ import {
   useRef,
   useState,
 } from "react";
-import { composeRegex } from "../helpers/functions";
+import { getSyntaxRegex } from "../data/syntaxRegex";
+import {
+  composeRegex,
+  getCurrentMatches,
+  getDefaultValues,
+  getFirstAssignedTab,
+  getTabPositions,
+  getUniqueIds,
+} from "../helpers/functions";
 import { Inputs } from "../types/Inputs";
 import { TabSelector } from "./TabSelector";
 import { VariableSelector } from "./VariableSelector";
@@ -39,92 +47,31 @@ export const Form = ({
   };
 
   const syncTabs = (body: string) => {
-    const tab = /(?<=\${)(\d+)(?=})|(?<=\$)(\d+)/;
-    const placeholder = /(?<=\${)(\d+:.+?)(?=})/;
-    const choice = /(?<=\${)(\d+\|.+?)(?=\|})/;
-    const variableWithoutBrackets = /(?<=\$)([A-Z_]+)/;
-    const variableWithBrackets = /(?<=\${)([A-Z_]+?)(?=})/;
-    const variableWithDefaultValue = /(?<=\${)([A-Z_]+?:[a-z]+)(?=})/;
+    const { tabsRegex, variablesRegex } = getSyntaxRegex();
 
-    const variables = [
-      ...body.matchAll(
-        composeRegex(
-          variableWithoutBrackets,
-          variableWithBrackets,
-          variableWithDefaultValue
-        )
-      ),
-    ];
+    const variableMatches = [...body.matchAll(composeRegex(variablesRegex))];
+    const uniqueVariableNames = getUniqueIds(variableMatches, ":");
 
-    const variableNames = variables.map((variable) => {
-      const name = variable[0].split(":")[0];
-      return name;
-    });
+    const tabMatches = [...body.matchAll(composeRegex(tabsRegex))];
+    const uniqueTabIds = getUniqueIds(tabMatches, /:|\|/);
 
-    const uniqueVariables = [...new Set(variableNames)];
+    const newVariables = uniqueVariableNames.map((name) => {
+      const variableWithCurrentName = getCurrentMatches(
+        variableMatches,
+        name,
+        ":"
+      );
 
-    const newVariables = uniqueVariables.map((name) => {
-      const variableWithCurrentName = variables.filter((variable) => {
-        const currentName = variable[0].split(":")[0];
-        return name === currentName;
-      });
-      const defaultValues = variableWithCurrentName.map((variable) => {
-        return variable[0].split(":")[1];
-      });
-
-      const positions = variables.map((variable) => {
-        const startPos = variable.index!;
-        const endPos = startPos + variable[0].length;
-        return { startPos, endPos };
-      });
+      const defaultValues = getDefaultValues(variableWithCurrentName);
+      const positions = getTabPositions(variableWithCurrentName);
 
       return { name, defaultValues, positions };
     });
 
-    const tabsWithIds = [
-      ...body.matchAll(composeRegex(tab, placeholder, choice)),
-    ];
-
-    const tabIds = tabsWithIds.map((tab) => {
-      const id = tab[0].split(/:|\|/)[0];
-
-      return id;
-    });
-
-    const uniqueTabs = [...new Set(tabIds)];
-
-    const newTabs = uniqueTabs.map((id) => {
-      const tabsWithCurrentId = tabsWithIds.filter((tab) => {
-        const currentId = tab[0].split(/:|\|/)[0];
-        return id === currentId;
-      });
-
-      const firstAssignedTab = tabsWithCurrentId
-        .map((tab) => {
-          const currentMatch = tab[0];
-          const label = currentMatch.slice(id.length + 1) || undefined;
-          const values = currentMatch.slice(id.length + 1) || undefined;
-          const choices = values?.split(",");
-
-          return { label, choices };
-        })
-        .find(({ label, choices }) => {
-          if (label) {
-            return true;
-          } else if (choices) {
-            return true;
-          } else {
-            return false;
-          }
-        });
-
-      const positions = tabsWithCurrentId.map((tab) => {
-        const currentMatch = tab[0];
-        const startPos = tab.index!;
-        const endPos = startPos + currentMatch.length;
-
-        return { startPos, endPos };
-      });
+    const newTabs = uniqueTabIds.map((id) => {
+      const tabsWithCurrentId = getCurrentMatches(tabMatches, id, /:|\|/);
+      const firstAssignedTab = getFirstAssignedTab(tabsWithCurrentId, id);
+      const positions = getTabPositions(tabsWithCurrentId);
 
       return {
         id,
