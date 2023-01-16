@@ -86,6 +86,8 @@ export const Form = ({
       variables: newVariables,
       tabs: newTabs,
     }));
+
+    setSelectedTab(newTabs[0].id);
   };
 
   const bodyRef = useRef<HTMLTextAreaElement>(null);
@@ -99,29 +101,38 @@ export const Form = ({
     bodyRef.current!.setSelectionRange(selectStart, selectEnd);
   };
 
+  const addTextToBody = (text: string) => {
+    const start = bodyRef.current!.selectionStart;
+
+    const firstSlice = body.slice(0, start);
+    const secondSlice = body.slice(start);
+    const updatedBody = firstSlice + text + secondSlice;
+
+    setInputs((lastInputs) => ({ ...lastInputs, body: updatedBody }));
+    syncTabs(updatedBody);
+  };
+
   const addSelectedTabOnKeyPress = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.ctrlKey && e.keyCode === 73) {
-      const start = bodyRef.current!.selectionStart;
+    if (e.ctrlKey && e.key === "i") {
+      addTextToBody("$" + selectedTab);
+    }
+  };
 
-      const firstSlice = body.slice(0, start);
-      const secondSlice = body.slice(start);
-      const updatedBody = firstSlice + "$" + selectedTab + secondSlice;
+  const addNextTabOnKeyPress = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.ctrlKey && e.key === "y") {
+      const currentTab =
+        tabs.length > 0 ? +tabs.sort((a, b) => +b.id - +a.id)[0].id : 0;
 
-      setInputs((lastInputs) => ({ ...lastInputs, body: updatedBody }));
-      syncTabs(updatedBody);
+      const nextTab = currentTab + 1;
+
+      addTextToBody("$" + nextTab);
     }
   };
 
   const IndentBodyWithTag = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.keyCode === 9) {
+    if (e.key === "Tab") {
       e.preventDefault();
-      const start = bodyRef.current!.selectionStart;
-
-      const firstSlice = body.slice(0, start);
-      const secondSlice = body.slice(start);
-      const updatedBody = firstSlice + "\\t" + secondSlice;
-      setInputs((lastInputs) => ({ ...lastInputs, body: updatedBody }));
-      syncTabs(updatedBody);
+      addTextToBody("\\t");
     }
   };
 
@@ -166,6 +177,7 @@ export const Form = ({
         }}
         onKeyDown={(e) => {
           addSelectedTabOnKeyPress(e);
+          addNextTabOnKeyPress(e);
           IndentBodyWithTag(e);
         }}
       />
