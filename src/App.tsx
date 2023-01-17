@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Accordion } from "./Accordion";
 import { Display } from "./components/Display";
 import { Form } from "./components/Form";
 import { Inputs } from "./types/Inputs";
@@ -20,7 +19,6 @@ export const App = () => {
     <>
       <Form {...inputs} setInputs={setInputs} />
       <Display {...inputs} />
-      <Accordion />
     </>
   );
 };
