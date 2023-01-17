@@ -139,31 +139,36 @@ export const Form = ({
   };
 
   return (
-    <form
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "flex-start",
-        gap: "5px",
-      }}
-    >
-      <label htmlFor="name">Name:</label>
-      <input id="name" name="name" value={name} onChange={setInput} />
+    <form style={{ marginBlock: "auto" }}>
+      <div className="grid">
+        <div>
+          <label htmlFor="name">Name:</label>
+          <input id="name" name="name" value={name} onChange={setInput} />
+        </div>
 
-      <label htmlFor="scope">Scope:</label>
-      <input id="scope" name="scope" value={scope} onChange={setInput} />
+        <div>
+          <label htmlFor="scope">Scope:</label>
+          <input id="scope" name="scope" value={scope} onChange={setInput} />
+        </div>
+      </div>
 
-      <label htmlFor="prefix">Prefix:</label>
-      <input id="prefix" name="prefix" value={prefix} onChange={setInput} />
+      <div className="grid">
+        <div>
+          <label htmlFor="prefix">Prefix:</label>
+          <input id="prefix" name="prefix" value={prefix} onChange={setInput} />
+        </div>
 
-      <label htmlFor="indentation">Indentation:</label>
-      <input
-        type="number"
-        id="indentation"
-        name="indentation"
-        value={indentation}
-        onChange={setInput}
-      />
+        <div>
+          <label htmlFor="indentation">Indentation:</label>
+          <input
+            type="number"
+            id="indentation"
+            name="indentation"
+            value={indentation}
+            onChange={setInput}
+          />
+        </div>
+      </div>
 
       <label htmlFor="body">Body:</label>
       <textarea
@@ -184,36 +189,42 @@ export const Form = ({
         }}
       />
 
-      <label htmlFor="description">Description:</label>
-      <input
-        id="description"
-        name="description"
-        value={description}
-        onChange={setInput}
-      />
+      <div className="grid">
+        <div>
+          <label htmlFor="description">Description:</label>
+          <input
+            id="description"
+            name="description"
+            value={description}
+            onChange={setInput}
+          />
+        </div>
 
-      {tabs.length > 0 && (
-        <>
-          <label htmlFor="selectTab">Select Tab:</label>
-          <select
-            id="selectTab"
-            value={selectedTab}
-            onChange={(e) => setSelectedTab(e.target.value)}
-          >
-            {tabs.map((tab) => (
-              <option value={tab.id} key={tab.id}>
-                {tab.id} {tab.label}
-              </option>
-            ))}
-          </select>
-        </>
-      )}
+        {tabs.length > 0 && (
+          <div>
+            <label htmlFor="selectTab">Select Tab:</label>
+            <select
+              id="selectTab"
+              value={selectedTab}
+              onChange={(e) => setSelectedTab(e.target.value)}
+            >
+              {tabs.map((tab) => (
+                <option value={tab.id} key={tab.id}>
+                  {tab.id} {tab.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+      </div>
 
-      {tabs.length > 0 && <TabSelector {...{ goToBodyLine, tabs }} />}
+      <div className="grid">
+        {tabs.length > 0 && <TabSelector {...{ goToBodyLine, tabs }} />}
 
-      {variables.length > 0 && (
-        <VariableSelector {...{ goToBodyLine, variables }} />
-      )}
+        {variables.length > 0 && (
+          <VariableSelector {...{ goToBodyLine, variables }} />
+        )}
+      </div>
     </form>
   );
 };

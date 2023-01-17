@@ -11,7 +11,7 @@ export const VariableSelector = ({
   variables,
 }: VariableSelectorProps) => {
   return (
-    <>
+    <div>
       <label htmlFor="variableSelector">Go To Variable:</label>
       {/* TODO: Go to body line on option click, not on change */}
       <select id="variableSelector" onChange={goToBodyLine}>
@@ -31,6 +31,6 @@ export const VariableSelector = ({
           </optgroup>
         ))}
       </select>
-    </>
+    </div>
   );
 };

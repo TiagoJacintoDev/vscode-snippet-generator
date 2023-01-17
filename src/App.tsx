@@ -16,9 +16,12 @@ export const App = () => {
   });
 
   return (
-    <>
+    <main
+      style={{ marginTop: "60px", marginInline: "auto" }}
+      className="container grid"
+    >
       <Form {...inputs} setInputs={setInputs} />
       <Display {...inputs} />
-    </>
+    </main>
   );
 };

@@ -8,7 +8,7 @@ interface TabSelectorProps {
 
 export const TabSelector = ({ goToBodyLine, tabs }: TabSelectorProps) => {
   return (
-    <>
+    <div>
       <label htmlFor="tagSelector">Go To Tab:</label>
       {/* TODO: Go to body line on option click, not on change */}
       <select id="tagSelector" onChange={goToBodyLine}>
@@ -28,6 +28,6 @@ export const TabSelector = ({ goToBodyLine, tabs }: TabSelectorProps) => {
           </optgroup>
         ))}
       </select>
-    </>
+    </div>
   );
 };

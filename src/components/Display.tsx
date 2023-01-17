@@ -1,7 +1,5 @@
-import { formatBody, indentText, paragraph } from "../helpers/functions";
+import { formatBody, indentText } from "../helpers/functions";
 import { Inputs } from "../types/Inputs";
-
-interface DisplayProps {}
 
 export const Display = ({
   body,
@@ -34,12 +32,19 @@ export const Display = ({
   });
 
   return (
-    <>
+    <section>
       {indentedDisplay.map((line, index) => (
-        <p key={index} style={{ whiteSpace: "pre", marginBlock: "10px" }}>
+        <p
+          key={index}
+          style={{
+            whiteSpace: "pre",
+            marginBlock: "10px",
+            fontSize: "25px",
+          }}
+        >
           {line}
         </p>
       ))}
-    </>
+    </section>
   );
 };
